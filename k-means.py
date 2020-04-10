@@ -2,16 +2,11 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import random
 import numpy as np
-from JSAnimation import IPython_display
-from matplotlib import animation
 from termcolor import colored
 import os
 
 
-dane = pd.read_csv("C:/Users/Administrator/Desktop/iris.csv", names=["sepal_length", "sepal_width", "petal_length", "petal_width","class"])
-
-
-
+dane = pd.read_csv("Ścieżka pliku iris.csv", names=["sepal_length", "sepal_width", "petal_length", "petal_width","class"])
 
 
 #######################################################################################
@@ -153,6 +148,7 @@ while True:
         elif wybor == 'c':
             y_do_analizy = "petal_length"
 
+#######################################################################################
 
     dane = dane[[x_do_analizy, y_do_analizy]]
     x_axis = dane[x_do_analizy]
@@ -189,6 +185,8 @@ while True:
         plt.ylabel('{} [cm]'.format(y_do_analizy))
         plt.title("Iteracja {}".format(liczba_iteracji))
         plt.pause(0.00001)
+        
+    
     os.system('cls')
     input("\nKliknij cokolwiek, aby kontynuować!")
     os.system('cls')
