@@ -6,7 +6,7 @@ from termcolor import colored
 import os
 
 
-df = pd.read_csv("C:/Users/Administrator/Desktop/iris.csv", names=["sepal_length", "sepal_width", "petal_length", "petal_width","class"])
+df = pd.read_csv("Enter your file path", names=["sepal_length", "sepal_width", "petal_length", "petal_width","class"])
 
 #######################################################################################
 
