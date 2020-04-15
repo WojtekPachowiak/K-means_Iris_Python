@@ -6,7 +6,10 @@ from termcolor import colored
 import os
 
 
-dane = pd.read_csv("Ścieżka pliku iris.csv", names=["sepal_length", "sepal_width", "petal_length", "petal_width","class"])
+dane = pd.read_csv("C:/Users/Administrator/Desktop/iris.csv", names=["sepal_length", "sepal_width", "petal_length", "petal_width","class"])
+
+
+
 
 
 #######################################################################################
@@ -87,7 +90,7 @@ while True:
     print("c \t petal_length")
     print("d \t petal_width")
     wybor = input('\n')
-    
+
     if wybor == 'a':
         x_do_analizy = "sepal_length"
         print("Drugi zbiór:")
@@ -150,27 +153,25 @@ while True:
 
 #######################################################################################
 
-    dane = dane[[x_do_analizy, y_do_analizy]]
+    dane1 = dane[[x_do_analizy, y_do_analizy]]
     x_axis = dane[x_do_analizy]
     y_axis = dane[y_do_analizy]
     liczba_iteracji =0
 
-    centroidy = losowanie_centroidow(x_do_analizy, y_do_analizy, dane)
+    centroidy = losowanie_centroidow(x_do_analizy, y_do_analizy, dane1)
 
     while True:
         liczba_iteracji+=1
         plt.clf()
-        centroid1, centroid2, centroid3 = euclid_distance(dane,centroidy)
+        centroid1, centroid2, centroid3 = euclid_distance(dane1,centroidy)
         centroid_prev_iteracja = centroidy[:]
         centroidy = przesun_centroidy(centroidy, centroid1, centroid2, centroid3)
-
 
         if centroid_prev_iteracja == centroidy:
             break
 
         for i in range(k):
             plt.scatter(centroidy[i][0],  centroidy[i][1], color=colours[i],marker="o",zorder=1,s=100,edgecolors ="k")
-
 
         for i in range(len(centroid1)):
             plt.scatter(centroid1.loc[[i],x_do_analizy],  centroid1.loc[[i],y_do_analizy], color=colours[0],marker="^",s=70,zorder=-1,alpha =0.5)
@@ -185,8 +186,8 @@ while True:
         plt.ylabel('{} [cm]'.format(y_do_analizy))
         plt.title("Iteracja {}".format(liczba_iteracji))
         plt.pause(0.00001)
-        
-    
+
+
     os.system('cls')
     input("\nKliknij cokolwiek, aby kontynuować!")
     os.system('cls')
