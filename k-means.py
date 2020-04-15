@@ -6,188 +6,121 @@ from termcolor import colored
 import os
 
 
-dane = pd.read_csv("C:/Users/Administrator/Desktop/iris.csv", names=["sepal_length", "sepal_width", "petal_length", "petal_width","class"])
-
-
-
-
+df = pd.read_csv("C:/Users/Administrator/Desktop/iris.csv", names=["sepal_length", "sepal_width", "petal_length", "petal_width","class"])
 
 #######################################################################################
 
 
-def losowanie_centroidow(x_do_analizy, y_do_analizy, dane):
-    centroidy = []
+def initialize_centroids(x_subset, y_subset, df):
+    centroids = []
     for i in range(k):
-        lenght = round(random.uniform(min(dane[x_do_analizy]),max(dane[x_do_analizy])),1)
-        width = round(random.uniform(min(dane[y_do_analizy]),max(dane[y_do_analizy])),1)
-        centroidy.append([lenght, width])
-    return centroidy
+        x_value = round(random.uniform(min(df[x_subset]),max(df[x_subset])),1)
+        y_value = round(random.uniform(min(df[y_subset]),max(df[y_subset])),1)
+        centroids.append([x_value,y_value])
+    return centroids
 
 #######################################################################################
 
 
-def euclid_distance(dane,centroidy):
-    centroid1 = pd.DataFrame([])
-    centroid2 = pd.DataFrame([])
-    centroid3 = pd.DataFrame([])
-    for c in range(len(dane)):
-        distance1 = (dane.iloc[[c]]-centroidy[0])
-        distance2 = (dane.iloc[[c]]-centroidy[1])
-        distance3 = (dane.iloc[[c]]-centroidy[2])
+def euclid_distance(df,centroids):
+    distance = [[],[],[]]
+    clustered_elements = [pd.DataFrame([]),pd.DataFrame([]),pd.DataFrame([])]
 
-        distance1 = distance1**2
-        distance2 = distance2**2
-        distance3 = distance3**2
+    for c in range(len(df)):
+        for i in range(k):
+            distance[i] = (df.iloc[[c]]-centroids[i])
+            distance[i] = distance[i]**2
+            distance[i] = float((distance[i].iat[0,0]+distance[i].iat[0,1])**(1/2))
 
-        distance1 = (distance1.iat[0,0]+distance1.iat[0,1])**(1/2)
-        distance2 = (distance2.iat[0,0]+distance2.iat[0,1])**(1/2)
-        distance3 = (distance3.iat[0,0]+distance3.iat[0,1])**(1/2)
+        if (distance[0] < distance[1]) and (distance[0] < distance[2]):
+             clustered_elements[0] = pd.concat([df.iloc[[c]], clustered_elements[0]], ignore_index=True)
 
-        if (distance1 < distance2) and (distance1 < distance3):
-             centroid1 = pd.concat([dane.iloc[[c]], centroid1], ignore_index=True)
+        elif (distance[1] < distance[0]) and (distance[1] < distance[2]):
+             clustered_elements[1] = pd.concat([df.iloc[[c]], clustered_elements[1]], ignore_index=True)
 
-        elif (distance2 < distance1) and (distance2 < distance3):
-             centroid2 = pd.concat([dane.iloc[[c]], centroid2], ignore_index=True)
-
-        elif (distance3 < distance2) and (distance3 < distance1):
-             centroid3 = pd.concat([dane.iloc[[c]], centroid3], ignore_index=True)
+        elif (distance[2] < distance[1]) and (distance[2] < distance[0]):
+             clustered_elements[2] = pd.concat([df.iloc[[c]], clustered_elements[2]], ignore_index=True)
         # input()
-
-    return centroid1, centroid2, centroid3
-
+    return clustered_elements
 
 #######################################################################################
 
-def przesun_centroidy(centroidy, centroid1, centroid2, centroid3):
-    if len(centroid1) != 0:
-        centroidy[0] = list(centroid1.sum()/len(centroid1))
-    else:
-        centroidy[0] = [round(random.uniform(min(dane[x_do_analizy]),max(dane[x_do_analizy])),1),  round(random.uniform(min(dane[y_do_analizy]),max(dane[y_do_analizy])),1)]
+def move_centroids(centroids, clustered_elements):
 
-    if len(centroid2) != 0:
-        centroidy[1] = list(centroid2.sum()/len(centroid2))
-    else:
-        centroidy[1] = [round(random.uniform(min(dane[x_do_analizy]),max(dane[x_do_analizy])),1),  round(random.uniform(min(dane[y_do_analizy]),max(dane[y_do_analizy])),1)]
+    for i in range(k):
+        if len(clustered_elements[i]) != 0:
+            centroids[i] = list(clustered_elements[i].sum()/len(clustered_elements[i]))    #assign new coordinates to the centroid
+        else:
+            centroids[i] = [round(random.uniform(min(df[x_subset]),max(df[x_subset])),1),  round(random.uniform(min(df[y_subset]),max(df[y_subset])),1)]   #assign random coordiantes to the lonely centroid
 
-    if len(centroid3) != 0:
-        centroidy[2] = list(centroid3.sum()/len(centroid3))
-    else:
-        centroidy[2] = [round(random.uniform(min(dane[x_do_analizy]),max(dane[x_do_analizy])),1),  round(random.uniform(min(dane[y_do_analizy]),max(dane[y_do_analizy])),1)]
-
-    return centroidy
+    return centroids
 
 
 #######################################################################################
-
 
 k = 3
 colours = ["red","blue","green"]
+answers = {"a":"sepal_length",  "b":"sepal_width",  "c":"petal_length",  "d":"petal_width"}
+
+
 
 while True:
-    print(colored("Iris dataset","yellow"),"\nWybierz dwa zbiory cech, które posłużą do klasyfikacji irysów!\nPierwszy zbiór:")
-    print("a \t sepal_length")
-    print("b \t sepal_width")
-    print("c \t petal_length")
-    print("d \t petal_width")
-    wybor = input('\n')
+    ##################################Choosing subsets######################################
+    answers_copy = dict(answers)
 
-    if wybor == 'a':
-        x_do_analizy = "sepal_length"
-        print("Drugi zbiór:")
-        print("b \t sepal_width")
-        print("c \t petal_length")
-        print("d \t petal_width")
-        wybor = input('\n')
+    print(colored("Iris dataset","yellow"),"\nChoose two subsets to classify.\n_______________________________\n")
+    for x,y in answers.items():
+        print(x,"\t",y)
+    choice = input(colored("\nFirst subset: ","cyan"))
+    x_subset = answers[choice]
+    answers_copy.pop(choice)
+    print("\n-------------------------------\n")
+    for x,y in answers_copy.items():
+        print(x,"\t",y)
+    choice = input(colored("\nSecond subset: ","cyan"))
+    y_subset = answers[choice]
 
-        if wybor == 'b':
-            y_do_analizy = "sepal_width"
-        elif wybor == 'c':
-            y_do_analizy = "petal_length"
-        elif wybor == 'd':
-            y_do_analizy = "petal_width"
 
-    elif wybor == 'b':
-        x_do_analizy = "sepal_width"
-        print("Drugi zbiór:")
-        print("a \t sepal_length")
-        print("c \t petal_length")
-        print("d \t petal_width")
-        wybor = input('\n')
+    df1 = df[[x_subset, y_subset]]
+    x_axis = df[x_subset]
+    y_axis = df[y_subset]
 
-        if wybor == 'a':
-            y_do_analizy = "sepal_length"
-        elif wybor == 'c':
-            y_do_analizy = "petal_length"
-        elif wybor == 'd':
-            y_do_analizy = "petal_width"
+    #########################################################################################
 
-    elif wybor == 'c':
-        x_do_analizy = "petal_length"
-        print("Drugi zbiór:")
-        print("a \t sepal_length")
-        print("b \t sepal_width")
-        print("d \t petal_width")
-        wybor = input('\n')
-
-        if wybor == 'a':
-            y_do_analizy = "sepal_length"
-        elif wybor == 'b':
-            y_do_analizy = "sepal_width"
-        elif wybor == 'd':
-            y_do_analizy = "petal_width"
-
-    elif wybor == 'd':
-        x_do_analizy = "petal_width"
-        print("Drugi zbiór:")
-        print("a \t sepal_length")
-        print("b \t sepal_width")
-        print("c \t petal_length")
-        wybor = input('\n')
-
-        if wybor == 'a':
-            y_do_analizy = "sepal_length"
-        elif wybor == 'b':
-            y_do_analizy = "sepal_width"
-        elif wybor == 'c':
-            y_do_analizy = "petal_length"
-
-#######################################################################################
-
-    dane1 = dane[[x_do_analizy, y_do_analizy]]
-    x_axis = dane[x_do_analizy]
-    y_axis = dane[y_do_analizy]
-    liczba_iteracji =0
-
-    centroidy = losowanie_centroidow(x_do_analizy, y_do_analizy, dane1)
+    centroids = initialize_centroids(x_subset, y_subset, df1)
+    iterations =0
 
     while True:
-        liczba_iteracji+=1
+        iterations+=1
         plt.clf()
-        centroid1, centroid2, centroid3 = euclid_distance(dane1,centroidy)
-        centroid_prev_iteracja = centroidy[:]
-        centroidy = przesun_centroidy(centroidy, centroid1, centroid2, centroid3)
+        clustered_elements = euclid_distance(df1,centroids)
 
-        if centroid_prev_iteracja == centroidy:
+        centroids_prev_iteration = centroids[:] #control variable
+
+        centroids = move_centroids(centroids, clustered_elements)
+
+        if centroids_prev_iteration == centroids:   #check if centroids have moved #if they haven't: break loop
             break
 
+
         for i in range(k):
-            plt.scatter(centroidy[i][0],  centroidy[i][1], color=colours[i],marker="o",zorder=1,s=100,edgecolors ="k")
+            plt.scatter(centroids[i][0],  centroids[i][1], color=colours[i],marker="o",zorder=1,s=100,edgecolors ="k")
 
-        for i in range(len(centroid1)):
-            plt.scatter(centroid1.loc[[i],x_do_analizy],  centroid1.loc[[i],y_do_analizy], color=colours[0],marker="^",s=70,zorder=-1,alpha =0.5)
+        for i in range(len(clustered_elements[0])):
+            plt.scatter(clustered_elements[0].loc[[i],x_subset],  clustered_elements[0].loc[[i],y_subset], color=colours[0],marker="^",s=70,zorder=-1,alpha =0.5)
 
-        for i in range(len(centroid2)):
-            plt.scatter(centroid2.loc[[i],x_do_analizy],  centroid2.loc[[i],y_do_analizy], color=colours[1],marker="^",s=70,zorder=-1,alpha =0.5)
+        for i in range(len(clustered_elements[1])):
+            plt.scatter(clustered_elements[1].loc[[i],x_subset],  clustered_elements[1].loc[[i],y_subset], color=colours[1],marker="^",s=70,zorder=-1,alpha =0.5)
 
-        for i in range(len(centroid3)):
-            plt.scatter(centroid3.loc[[i],x_do_analizy],  centroid3.loc[[i],y_do_analizy], color=colours[2],marker="^",s=70,zorder=-1,alpha =0.5)
-        # Note that using time.sleep does *not* work here!
-        plt.xlabel('{} [cm]'.format(x_do_analizy))
-        plt.ylabel('{} [cm]'.format(y_do_analizy))
-        plt.title("Iteracja {}".format(liczba_iteracji))
+        for i in range(len(clustered_elements[2])):
+            plt.scatter(clustered_elements[2].loc[[i],x_subset],  clustered_elements[2].loc[[i],y_subset], color=colours[2],marker="^",s=70,zorder=-1,alpha =0.5)
+
+
+        plt.xlabel('{} [cm]'.format(x_subset))
+        plt.ylabel('{} [cm]'.format(y_subset))
+        plt.title("Iteration {}".format(iterations))
         plt.pause(0.00001)
 
-
     os.system('cls')
-    input("\nKliknij cokolwiek, aby kontynuować!")
+    input("Press any button to continue...")
     os.system('cls')
