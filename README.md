@@ -1,4 +1,4 @@
-# 🌸 K-means on Iris dataset in Python
+# K-means on Iris dataset in Python 🌸
 
 ![kmeans](https://user-images.githubusercontent.com/50328147/113590925-91e2f200-9633-11eb-9eba-2fa18b217f92.png)
 
