@@ -1,12 +1,12 @@
+
 import pandas as pd
 import matplotlib.pyplot as plt
 import random
 import numpy as np
-from termcolor import colored
 import os
+from sklearn import datasets
 
 
-df = pd.read_csv("Enter your file path", names=["sepal_length", "sepal_width", "petal_length", "petal_width","class"])
 
 #######################################################################################
 
@@ -58,9 +58,15 @@ def move_centroids(centroids, clustered_elements):
 
 #######################################################################################
 
+# df = pd.read_csv("Enter your file path", names=["sepal_length", "sepal_width", "petal_length", "petal_width","class"])
+
+df = datasets.load_iris(return_X_y=False, as_frame = True)
+features = df.feature_names
+df = df.data
+
 k = 3
 colours = ["red","blue","green"]
-answers = {"a":"sepal_length",  "b":"sepal_width",  "c":"petal_length",  "d":"petal_width"}
+answers = {"a":features[0],  "b":features[1],  "c":features[2],  "d":features[3]}
 
 
 
@@ -68,16 +74,16 @@ while True:
     ##################################Choosing subsets######################################
     answers_copy = dict(answers)
 
-    print(colored("Iris dataset","yellow"),"\nChoose two subsets to classify.\n_______________________________\n")
+    print("Iris dataset","\nChoose two subsets to classify.\n_______________________________\n")
     for x,y in answers.items():
         print(x,"\t",y)
-    choice = input(colored("\nFirst subset: ","cyan"))
+    choice = input("\nFirst subset: ")
     x_subset = answers[choice]
     answers_copy.pop(choice)
     print("\n-------------------------------\n")
     for x,y in answers_copy.items():
         print(x,"\t",y)
-    choice = input(colored("\nSecond subset: ","cyan"))
+    choice = input("\nSecond subset: ")
     y_subset = answers[choice]
 
 
@@ -122,5 +128,5 @@ while True:
         plt.pause(0.00001)
 
     os.system('cls')
-    input("Press any button to continue...")
+    input("The algorithm has converged. Press any button to continue...")
     os.system('cls')
