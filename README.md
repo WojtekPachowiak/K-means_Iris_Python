@@ -8,4 +8,4 @@ It'a a low level implementation: Scikit-learn is used only for importing iris da
 Choose 2 features (sepal or petal, width or length) and watch how k-means algorithms is converging. The visualization is made in matplotlib.
 
 
-#UPDATED 06.09.2021
+# UPDATED 06.09.2021
