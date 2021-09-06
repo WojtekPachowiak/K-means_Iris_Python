@@ -1,132 +1,219 @@
 
+import math
 import pandas as pd
 import matplotlib.pyplot as plt
 import random
 import numpy as np
 import os
+
+from pandas.core.frame import DataFrame
 from sklearn import datasets
 
 
-
-#######################################################################################
-
-
-def initialize_centroids(x_subset, y_subset, df):
-    centroids = []
-    for i in range(k):
-        x_value = round(random.uniform(min(df[x_subset]),max(df[x_subset])),1)
-        y_value = round(random.uniform(min(df[y_subset]),max(df[y_subset])),1)
-        centroids.append([x_value,y_value])
-    return centroids
-
-#######################################################################################
+#======================
+class K_means:
+    k = None
+    features_values_range = [[None, None],[None, None]]
 
 
-def euclid_distance(df,centroids):
-    distance = [[],[],[]]
-    clustered_elements = [pd.DataFrame([]),pd.DataFrame([]),pd.DataFrame([])]
+    def init(k):
+        K_means.k = k
 
-    for c in range(len(df)):
-        for i in range(k):
-            distance[i] = (df.iloc[[c]]-centroids[i])
-            distance[i] = distance[i]**2
-            distance[i] = float((distance[i].iat[0,0]+distance[i].iat[0,1])**(1/2))
+    def _set_features_values_range(f_v_range):
+        K_means.features_values_range = f_v_range
 
-        if (distance[0] < distance[1]) and (distance[0] < distance[2]):
-             clustered_elements[0] = pd.concat([df.iloc[[c]], clustered_elements[0]], ignore_index=True)
 
-        elif (distance[1] < distance[0]) and (distance[1] < distance[2]):
-             clustered_elements[1] = pd.concat([df.iloc[[c]], clustered_elements[1]], ignore_index=True)
+    def initialize_centroids(df_subset):
+        centroids = []
+        
+        x_range = [min(df_subset.iloc[:,0]),max(df_subset.iloc[:,0])]
+        y_range = [min(df_subset.iloc[:,1]),max(df_subset.iloc[:,1])]
+        K_means._set_features_values_range([x_range,y_range])
 
-        elif (distance[2] < distance[1]) and (distance[2] < distance[0]):
-             clustered_elements[2] = pd.concat([df.iloc[[c]], clustered_elements[2]], ignore_index=True)
-        # input()
-    return clustered_elements
+        for i in range(K_means.k):
+            x_value = random.uniform(x_range[0], x_range[1])
+            x_value = round(x_value,1)
+            y_value = random.uniform(y_range[0], y_range[1])
+            y_value = round(y_value,1)
+            centroids.append([x_value,y_value])
+        return centroids
 
-#######################################################################################
 
-def move_centroids(centroids, clustered_elements):
+    def move_centroids(centroids, clustered_observations):
+        prev_centroids = centroids[:]
+        for i in range(K_means.k):
+            if len(clustered_observations[i]) != 0:
+                #assign new coordinates to the centroid
+                centroids[i] = clustered_observations[i].mean(axis=0).round(1).values.tolist()
 
-    for i in range(k):
-        if len(clustered_elements[i]) != 0:
-            centroids[i] = list(clustered_elements[i].sum()/len(clustered_elements[i]))    #assign new coordinates to the centroid
+            else:
+                #assign random coordiantes to the lonely centroid
+                x = round(random.uniform(K_means.features_values_range[0][0], K_means.features_values_range[0][1]),1)
+                y = round(random.uniform(K_means.features_values_range[1][0], K_means.features_values_range[1][1]),1)
+                centroids[i] = [x, y]   
+        is_end = False
+        if prev_centroids == centroids:
+            is_end = True
+        return centroids, is_end
+
+    def categorize_observations(observations, centroids):
+        clustered_observations = [pd.DataFrame() for _ in range(len(centroids))]
+        observations = observations.values.tolist()
+        for point in observations:
+            shortest_dist = math.inf
+            closest_centroid_index = None
+            for i in range(len(centroids)):
+                dist = math.dist(point, centroids[i])
+                if dist < shortest_dist: 
+                    shortest_dist = dist
+                    closest_centroid_index = i
+            clustered_observations[closest_centroid_index] = clustered_observations[closest_centroid_index].append(pd.DataFrame([point]))
+        return clustered_observations
+#======================
+
+
+#======================
+class Visualization:
+    # colours = ["red","blue","green"]
+    colours = None
+    iteration = 1
+
+    def init(k):
+        if k == 3:
+            Visualization.colours = ["red","blue","green"]
         else:
-            centroids[i] = [round(random.uniform(min(df[x_subset]),max(df[x_subset])),1),  round(random.uniform(min(df[y_subset]),max(df[y_subset])),1)]   #assign random coordiantes to the lonely centroid
+            Visualization.colours = plt.cm.jet(np.linspace(0,1,k))
 
-    return centroids
+    def draw_and_wait(categorized_observations, features, k):
+        cat_obs = categorized_observations
+
+        df = pd.DataFrame()
+        for i in range(k):
+            new = pd.DataFrame(cat_obs[i])
+            new[""] = Visualization.colours[i]
+            df = pd.concat([df,new])
+
+        for i in range(k):
+            plt.scatter(centroids[i][0],  centroids[i][1], c=Visualization.colours[i],marker="o",zorder=1,s=100,edgecolors ="k")
+        plt.scatter(df.iloc[:,0],  df.iloc[:,1], c=df.iloc[:,2],marker="^",s=70,zorder=-1,alpha =0.5)
+
+        plt.xlabel('{} [cm]'.format(features[0]))
+        plt.ylabel('{} [cm]'.format(features[1]))
+        plt.title("Iteration {}".format(Visualization.iteration))
+        plt.pause(0.00001)
+        plt.clf()
+
+        Visualization.iteration+=1
+    
+    def reset_iter_counter():
+        Visualization.iteration = 1
+#======================
+
+
+
+#======================
+class Menu:
+    possible_answers = {}
+    last_letter_ASCII = None
+
+    def Init(features : list):
+        num_of_answers = len(features)
+        first_letter_ASCII = ord('a')
+        last_letter_ASCII = first_letter_ASCII + num_of_answers - 1
+        Menu.last_letter_ASCII = last_letter_ASCII
+
+        for i in range(num_of_answers):
+            letter = chr(first_letter_ASCII+ i)
+            Menu.possible_answers[letter] = features[i]
+        Menu.num_of_features = num_of_answers
+
+
+    def choosing_data_subset() -> list[str]:
+        answers_left = Menu.possible_answers.copy()
+        subset = []
+
+        print("Iris dataset","\nChoose two subsets to classify.\n_______________________________\n")
+
+        #first choice
+        for x,y in answers_left.items():
+            print(x,"\t",y)
+        choice = input("\nFirst subset: ")
+        Menu._check_input_correctness(choice)
+        subset.append(Menu.possible_answers[choice])
+        answers_left.pop(choice)
+        
+
+        print("\n-------------------------------\n")
+
+        #second choice
+        for x,y in answers_left.items():
+            print(x,"\t",y)
+        choice = input("\nSecond subset: ")
+        Menu._check_input_correctness(choice)
+        subset.append(Menu.possible_answers[choice])
+
+        return subset
+    
+    def _check_input_correctness(input):
+        if type(input) != str or len(input) == 0 or ord(input) > Menu.last_letter_ASCII or ord(input) < ord('a'):
+            raise Exception('ERROR::WRONG INPUT CHARACTER GIVEN!') 
+#======================
+
+
+
+#======================
+class Data:
+    features = None
+    df = None
+
+    def Init():
+        df = datasets.load_iris(return_X_y=False, as_frame = True)
+        Data.df = df.data
+        Data.features = df.feature_names
+#======================
+
+
+
+
+
+
+
+
+
+
 
 
 #######################################################################################
+################################### APPLICATION #######################################
+#######################################################################################
 
-# df = pd.read_csv("Enter your file path", names=["sepal_length", "sepal_width", "petal_length", "petal_width","class"])
-
-df = datasets.load_iris(return_X_y=False, as_frame = True)
-features = df.feature_names
-df = df.data
-
+#centroids number
 k = 3
-colours = ["red","blue","green"]
-answers = {"a":features[0],  "b":features[1],  "c":features[2],  "d":features[3]}
-
-
+K_means.init(k)
+#load dataset and fill fields' values
+Data.Init()
+#tell Menu object what features are available for the user to choose from
+Menu.Init(Data.features)
+#specify how many colors need to be generated for visualization purposes
+Visualization.init(k)
 
 while True:
-    ##################################Choosing subsets######################################
-    answers_copy = dict(answers)
-
-    print("Iris dataset","\nChoose two subsets to classify.\n_______________________________\n")
-    for x,y in answers.items():
-        print(x,"\t",y)
-    choice = input("\nFirst subset: ")
-    x_subset = answers[choice]
-    answers_copy.pop(choice)
-    print("\n-------------------------------\n")
-    for x,y in answers_copy.items():
-        print(x,"\t",y)
-    choice = input("\nSecond subset: ")
-    y_subset = answers[choice]
-
-
-    df1 = df[[x_subset, y_subset]]
-    x_axis = df[x_subset]
-    y_axis = df[y_subset]
-
-    #########################################################################################
-
-    centroids = initialize_centroids(x_subset, y_subset, df1)
-    iterations =0
-
+    #show menu, wait for user input and return user's desired dataset's subset
+    df_subset_features = Menu.choosing_data_subset()
+    #initialize K-means' centroids
+    df_subset = Data.df[df_subset_features]
+    centroids = K_means.initialize_centroids(df_subset)
+    #reset the counter indicating which iteration is currently visualized
+    Visualization.reset_iter_counter()
+    
     while True:
-        iterations+=1
-        plt.clf()
-        clustered_elements = euclid_distance(df1,centroids)
-
-        centroids_prev_iteration = centroids[:] #control variable
-
-        centroids = move_centroids(centroids, clustered_elements)
-
-        if centroids_prev_iteration == centroids:   #check if centroids have moved #if they haven't: break loop
+        categorized_observations = K_means.categorize_observations(df_subset, centroids)
+        centroids, is_end = K_means.move_centroids(centroids, categorized_observations)
+        if is_end:
             break
-
-
-        for i in range(k):
-            plt.scatter(centroids[i][0],  centroids[i][1], color=colours[i],marker="o",zorder=1,s=100,edgecolors ="k")
-
-        for i in range(len(clustered_elements[0])):
-            plt.scatter(clustered_elements[0].loc[[i],x_subset],  clustered_elements[0].loc[[i],y_subset], color=colours[0],marker="^",s=70,zorder=-1,alpha =0.5)
-
-        for i in range(len(clustered_elements[1])):
-            plt.scatter(clustered_elements[1].loc[[i],x_subset],  clustered_elements[1].loc[[i],y_subset], color=colours[1],marker="^",s=70,zorder=-1,alpha =0.5)
-
-        for i in range(len(clustered_elements[2])):
-            plt.scatter(clustered_elements[2].loc[[i],x_subset],  clustered_elements[2].loc[[i],y_subset], color=colours[2],marker="^",s=70,zorder=-1,alpha =0.5)
-
-
-        plt.xlabel('{} [cm]'.format(x_subset))
-        plt.ylabel('{} [cm]'.format(y_subset))
-        plt.title("Iteration {}".format(iterations))
-        plt.pause(0.00001)
+        else:
+            Visualization.draw_and_wait(categorized_observations, df_subset_features, K_means.k)
 
     os.system('cls')
-    input("The algorithm has converged. Press any button to continue...")
+    input("The K-means algorithm has converged. Press any button to continue...")
     os.system('cls')
